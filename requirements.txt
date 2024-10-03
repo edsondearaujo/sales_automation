@@ -1,0 +1,3 @@
+pandas==1.5.3            # Para manipulação e análise de dados
+openpyxl==3.0.10        # Para leitura e escrita de arquivos Excel
+unittest2==1.1.0        # Para testes unitários (opcional, o unittest padrão já vem com Python)
