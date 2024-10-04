@@ -6,7 +6,8 @@ class Menu:
         self.opcoes[chave] = (descricao, comando)
 
     def exibir(self):
-        print("\nMenu:")
+        print("\n       MENU")
+        print()
         for chave, (descricao, _) in self.opcoes.items():
             print(f"{chave}. {descricao}")
 

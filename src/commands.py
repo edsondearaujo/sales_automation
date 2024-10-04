@@ -17,11 +17,13 @@ class InserirVendaCommand(Command):
         self.database = database
 
     def execute(self):
+        print()
         produto_id = input("ID do Produto: ")
         quantidade = int(input("Quantidade Vendida: "))
         preco_unitario = float(input("Preço Unitário: "))
         data_venda = input("Data da Venda (YYYY-MM-DD): ")
         self.database.inserir_venda(produto_id, quantidade, preco_unitario, data_venda)
+        print()
         print("Venda inserida com sucesso!")
 
 class GerarRelatorioCommand(Command):
@@ -31,8 +33,10 @@ class GerarRelatorioCommand(Command):
     def execute(self):
         relatorio = self.database.gerar_relatorio()
         if relatorio:
+            print()
             print(f"Total Geral: R$ {relatorio['total_geral']:.2f}")
             print("Total por Produto:")
+            print()
             for produto in relatorio['produtos']:
                 print(f"Produto ID {produto['produto_id']}: Quantidade: {produto['quantidade']}, Total: R$ {produto['total']:.2f}")
         else:

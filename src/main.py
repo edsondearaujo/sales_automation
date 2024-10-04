@@ -16,8 +16,11 @@ class Aplicacao:
 
         while True:
             menu.exibir()
+            print()
             opcao = input("Escolha uma opção: ")
+            print()
             menu.escolher(opcao)
+            print()
 
 if __name__ == "__main__":
     app = Aplicacao()
