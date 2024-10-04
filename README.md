@@ -1,5 +1,5 @@
 
-# Sales Report Automation
+# Sales Automation
 
 Uma aplicação simples para gerenciar produtos, registrar vendas e gerar relatórios utilizando SQLite.
 
