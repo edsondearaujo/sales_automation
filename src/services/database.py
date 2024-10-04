@@ -1,69 +1,62 @@
-# src/services/database.py
 import sqlite3
 
+class Database:
+    def __init__(self):
+        self.conn = sqlite3.connect('vendas.db')
+        self.cursor = self.conn.cursor()
 
-def criar_tabelas():
-    with sqlite3.connect('vendas.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS produtos (
+    def criar_tabelas(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produto (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                categoria TEXT NOT NULL
-            )
+                nome TEXT,
+                categoria TEXT
+            );
         ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS vendas (
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS venda (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 produto_id INTEGER,
-                quantidade INTEGER NOT NULL,
-                preco_unitario REAL NOT NULL,
-                data_venda TEXT NOT NULL,
-                FOREIGN KEY (produto_id) REFERENCES produtos (id)
-            )
+                quantidade INTEGER,
+                preco_unitario REAL,
+                data_venda TEXT,
+                FOREIGN KEY (produto_id) REFERENCES produto (id)
+            );
         ''')
-        conn.commit()
+        self.conn.commit()
 
+    def inserir_produto(self, nome, categoria):
+        self.cursor.execute('''
+            INSERT INTO produto (nome, categoria) VALUES (?, ?)
+        ''', (nome, categoria))
+        self.conn.commit()
 
-def inserir_produto(nome, categoria):
-    with sqlite3.connect('vendas.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO produtos (nome, categoria) VALUES (?, ?)', (nome, categoria))
-        conn.commit()
+    def inserir_venda(self, produto_id, quantidade, preco_unitario, data_venda):
+        self.cursor.execute('''
+            INSERT INTO venda (produto_id, quantidade, preco_unitario, data_venda)
+            VALUES (?, ?, ?, ?)
+        ''', (produto_id, quantidade, preco_unitario, data_venda))
+        self.conn.commit()
 
-
-def inserir_venda(produto_id, quantidade, preco_unitario, data_venda):
-    with sqlite3.connect('vendas.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO vendas (produto_id, quantidade, preco_unitario, data_venda) VALUES (?, ?, ?, ?)',
-                       (produto_id, quantidade, preco_unitario, data_venda))
-        conn.commit()
-
-
-def gerar_relatorio():
-    with sqlite3.connect('vendas.db') as conn:
-        cursor = conn.cursor()
-
-        # Obter total geral e total por produto
-        cursor.execute('''
-            SELECT p.nome, SUM(v.quantidade) as quantidade, SUM(v.quantidade * v.preco_unitario) as total
-            FROM vendas v
-            JOIN produtos p ON v.produto_id = p.id
-            GROUP BY p.nome
+    def gerar_relatorio(self):
+        self.cursor.execute('''
+            SELECT SUM(venda.quantidade * venda.preco_unitario) as total_geral
+            FROM venda;
         ''')
+        total_geral = self.cursor.fetchone()[0]
+        if total_geral is None:
+            return None
 
-        vendas = cursor.fetchall()
-
-        total_geral = sum(venda[2] for venda in vendas)  # Somando os totais
-        total_por_produto = {
-            venda[0]: {
-                'quantidade': venda[1],
-                'total': venda[2]
-            }
-            for venda in vendas
-        }
+        self.cursor.execute('''
+            SELECT produto.id, produto.nome, SUM(venda.quantidade) as quantidade, 
+            SUM(venda.quantidade * venda.preco_unitario) as total
+            FROM venda
+            INNER JOIN produto ON venda.produto_id = produto.id
+            GROUP BY produto.id;
+        ''')
+        produtos = self.cursor.fetchall()
 
         return {
             'total_geral': total_geral,
-            'total_por_produto': total_por_produto
+            'produtos': [{'produto_id': p[0], 'nome': p[1], 'quantidade': p[2], 'total': p[3]} for p in produtos]
         }
