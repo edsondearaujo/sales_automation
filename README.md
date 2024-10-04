@@ -20,5 +20,21 @@ sales_report_automation/ │ ├── src/ │ ├── models/ │ │ ├─
    git clone https://github.com/seu_usuario/automacao_relatorios_vendas.git
 
 2. Navegue até o diretório do projeto:
-```bash
+   ```bash
     cd automacao_relatorios_vendas
+
+3. Crie um ambiente virtual (opcional, mas recomendado):
+   ```bash   
+   python3 -m venv venv
+   source venv/bin/activate  # No Linux/macOS
+   venv\Scripts\activate  # No Windows
+
+4. Instale as dependências:
+   ```bash 
+   pip install -r requirements.txt
+
+# Uso
+
+## Para iniciar o programa, execute o seguinte comando:
+   ```bash 
+   python3 -m src.main
