@@ -1,40 +1,44 @@
-# Automação de Relatórios de Vendas
 
-Este projeto consiste em uma automação de relatórios de vendas utilizando Python e um banco de dados SQLite.<br>
-O objetivo é permitir a inserção de produtos e vendas, bem como a geração de relatórios de vendas de forma fácil e eficiente.
+# Sales Report Automation
 
-## Estrutura do Projeto
+Uma aplicação simples para gerenciar produtos, registrar vendas e gerar relatórios utilizando SQLite.
 
-sales_report_automation/ │ ├── src/ │ ├── models/ │ │ ├── init.py │ │ ├── produto.py │ │ └── venda.py │ ├── services/ │ │ ├── init.py │ │ ├── carregar_vendas.py │ │ └── database.py │ ├── main.py │ ├── tests/ │ ├── test_carregar_vendas.py │ ├── test_produto.py │ ├── test_venda.py │ ├── Dockerfile ├── docker-compose.yml ├── vendas.xlsx ├── requirements.txt └── README.md
+## Como rodar o projeto
 
+### Usando Python localmente
 
-## Pré-requisitos
-
-- Python 3.x
-- SQLite3
-
-## Instalação
-
-1. Clone este repositório:
+1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu_usuario/automacao_relatorios_vendas.git
+   git clone https://github.com/seu-usuario/sales_report_automation.git
+   cd sales_report_automation
+   ```
 
-2. Navegue até o diretório do projeto:
+2. Crie um ambiente virtual e instale as dependências:
    ```bash
-    cd automacao_relatorios_vendas
-
-3. Crie um ambiente virtual (opcional, mas recomendado):
-   ```bash   
    python3 -m venv venv
-   source venv/bin/activate  # No Linux/macOS
-   venv\Scripts\activate  # No Windows
-
-4. Instale as dependências:
-   ```bash 
+   source venv/bin/activate
    pip install -r requirements.txt
+   ```
 
-# Uso
-
-## Para iniciar o programa, execute o seguinte comando:
-   ```bash 
+3. Rode a aplicação:
+   ```bash
    python3 -m src.main
+   ```
+
+### Usando Docker
+
+1. Construa a imagem Docker:
+   ```bash
+   docker build -t sales-report-automation .
+   ```
+
+2. Rode o contêiner:
+   ```bash
+   docker run -it sales-report-automation
+   ```
+
+## Funcionalidades
+
+- Inserção de Produtos
+- Registro de Vendas
+- Geração de Relatórios
