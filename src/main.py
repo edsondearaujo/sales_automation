@@ -1,30 +1,11 @@
+from utils import carregar_dados_planilha
+from database import create_connection, insert_produto
 import sqlite3
 
 
-def conectar_banco():
-    conn = sqlite3.connect('automacao_vendas.db')
-    print("Conexão estabelecida com o banco de dados.")
-    return conn
-
-
-def inserir_produto(conn, nome, preco, categoria):
-    cur = conn.cursor()
-    cur.execute("INSERT INTO produtos (nome, preco, categoria) VALUES (?, ?, ?)", (nome, preco, categoria))
-    conn.commit()
-    print(f"Produto '{nome}' registrado com sucesso!")
-
-
-def inserir_venda(conn, produto_id, vendedor_id, quantidade):
-    cur = conn.cursor()
-    cur.execute("INSERT INTO vendas (produto_id, vendedor_id, quantidade) VALUES (?, ?, ?)",
-                (produto_id, vendedor_id, quantidade))
-    conn.commit()
-    print(f"Venda registrada: Produto ID {produto_id}, Vendedor ID {vendedor_id}, Quantidade {quantidade}")
-
-
 def gerar_relatorio(conn):
+    """Gera um relatório de vendas consolidado."""
     cur = conn.cursor()
-
     cur.execute("""
         SELECT p.nome, SUM(v.quantidade) AS total_vendas,
                SUM(v.quantidade * p.preco) AS lucro_total,
@@ -50,40 +31,31 @@ def gerar_relatorio(conn):
         print("---------------------")
 
 
+def processar_dados_e_inserir(conn, dados_produtos):
+    """Processa os dados da planilha e insere os produtos no banco de dados."""
+    for item in dados_produtos[1:]:  # Ignora a primeira linha (cabeçalho)
+        nome, categoria, preco = item[0], item[1], float(item[2])
+        insert_produto(conn, nome, categoria, preco)
+
+
 def main():
-    conn = conectar_banco()
+    # Carrega os dados da planilha do Google
+    dados_produtos = carregar_dados_planilha('11v6MHigHbyEYJ1WqSAZr9pbKGgapXMzS70oKK-HSPvA', 'produtos!A1:D6')
 
-    while True:
-        print("\n       MENU")
-        print("1. Inserir Produto")
-        print("2. Inserir Venda")
-        print("3. Gerar Relatório")
-        print("4. Sair")
+    # Conectar ao banco de dados
+    conn = create_connection('data/automacao_vendas.db')
+    if not conn:
+        return
 
-        opcao = input("Escolha uma opção: ")
+    # Processar os dados e inserir no banco de dados
+    processar_dados_e_inserir(conn, dados_produtos)
 
-        if opcao == '1':
-            nome = input("Digite o nome do produto: ")
-            preco = float(input("Digite o preço do produto: R$ "))
-            categoria = input("Digite a categoria do produto: ")  # Nova entrada para categoria
-            inserir_produto(conn, nome, preco, categoria)
+    # Gerar relatório de vendas
+    gerar_relatorio(conn)
 
-        elif opcao == '2':
-            produto_id = int(input("Digite o ID do produto: "))
-            vendedor_id = int(input("Digite o ID do vendedor: "))
-            quantidade = int(input("Digite a quantidade vendida: "))
-            inserir_venda(conn, produto_id, vendedor_id, quantidade)
-
-        elif opcao == '3':
-            gerar_relatorio(conn)
-
-        elif opcao == '4':
-            break
-
-        else:
-            print("Opção inválida. Tente novamente.")
-
-    conn.close()
+    # Fechar a conexão com o banco de dados
+    if conn:
+        conn.close()
 
 
 if __name__ == "__main__":
