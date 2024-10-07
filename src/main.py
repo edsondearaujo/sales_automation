@@ -1,61 +1,71 @@
-from utils import carregar_dados_planilha
-from database import create_connection, insert_produto
-import sqlite3
+#src/main.py
+from src.utils import carregar_dados_aba
+from src.database import create_connection, insert_produto, insert_vendedor, insert_venda
+import logging
+from config.variaveis_de_ambiente import *
+
+logging.basicConfig(filename='logs/execution.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def gerar_relatorio(conn):
-    """Gera um relatório de vendas consolidado."""
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT p.nome, SUM(v.quantidade) AS total_vendas,
-               SUM(v.quantidade * p.preco) AS lucro_total,
-               ve.nome AS vendedor_nome, 
-               SUM(v.quantidade) AS total_vendas_vendedor
-        FROM vendas v
-        JOIN produtos p ON v.produto_id = p.id
-        JOIN vendedores ve ON v.vendedor_id = ve.id
-        GROUP BY p.id, ve.nome
-    """)
+def processar_dados_e_inserir(conn, dados_produtos, dados_vendedores, dados_vendas):
+    """Processa os dados das planilhas e insere no banco de dados."""
+    try:
+        # Processa e insere produtos
+        for item in dados_produtos[1:]:  # Ignora o cabeçalho
+            nome, preco, categoria = item[1], float(item[2]), item[3]
+            logging.info(f"Processando produto: {nome}, Categoria: {categoria}, Preço: R$ {preco:.2f}")
+            insert_produto(conn, nome, categoria, preco)
 
-    relatorios = cur.fetchall()
+        # Processa e insere vendedores
+        for item in dados_vendedores[1:]:
+            nome_vendedor, email_vendedor = item[1], item[2]
+            logging.info(f"Processando vendedor: {nome_vendedor}, Email: {email_vendedor}")
+            insert_vendedor(conn, nome_vendedor)
 
-    print("Relatório de Vendas")
-    print("---------------------")
-    for row in relatorios:
-        produto, total_vendas, lucro_total, vendedor_nome, total_vendas_vendedor = row
-        print(f"Produto: {produto}")
-        print(f"Total Vendas: {total_vendas}")
-        print(f"Lucro Total: R$ {lucro_total:.2f}")
-        print(f"Vendedor: {vendedor_nome}")
-        print(f"Quantidade: {total_vendas_vendedor}")
-        print("---------------------")
+        # Processa e insere vendas
+        for item in dados_vendas[1:]:
+            produto_id, vendedor_id, quantidade = int(item[1]), int(item[2]), int(item[3])
+            logging.info(
+                f"Processando venda: Produto ID {produto_id}, Vendedor ID {vendedor_id}, Quantidade: {quantidade}")
+            insert_venda(conn, produto_id, vendedor_id, quantidade)
 
-
-def processar_dados_e_inserir(conn, dados_produtos):
-    """Processa os dados da planilha e insere os produtos no banco de dados."""
-    for item in dados_produtos[1:]:  # Ignora a primeira linha (cabeçalho)
-        nome, categoria, preco = item[0], item[1], float(item[2])
-        insert_produto(conn, nome, categoria, preco)
+        logging.info("Dados inseridos com sucesso no banco de dados.")
+    except Exception as e:
+        logging.error(f"Erro ao processar e inserir dados: {e}")
 
 
 def main():
-    # Carrega os dados da planilha do Google
-    dados_produtos = carregar_dados_planilha('11v6MHigHbyEYJ1WqSAZr9pbKGgapXMzS70oKK-HSPvA', 'produtos!A1:D6')
+    logging.info("Iniciando o processo de autenticação e carregamento de dados.")
 
-    # Conectar ao banco de dados
-    conn = create_connection('data/automacao_vendas.db')
-    if not conn:
-        return
+    try:
+        # Carrega os dados de cada aba
+        dados_produtos = carregar_dados_aba(SPREADSHEET_ID, "produtos!A2:D6")
+        dados_vendedores = carregar_dados_aba(SPREADSHEET_ID, "vendedores!A2:C6")
+        dados_vendas = carregar_dados_aba(SPREADSHEET_ID, "vendas!A2:E6")
 
-    # Processar os dados e inserir no banco de dados
-    processar_dados_e_inserir(conn, dados_produtos)
+        if not dados_produtos or not dados_vendedores or not dados_vendas:
+            logging.error("Erro: Não foi possível carregar os dados da planilha.")
+            return
 
-    # Gerar relatório de vendas
-    gerar_relatorio(conn)
+        # Conecta ao banco de dados
+        conn = create_connection(DATABASE_PATH)
+        if not conn:
+            logging.error("Erro ao conectar ao banco de dados.")
+            return
 
-    # Fechar a conexão com o banco de dados
-    if conn:
-        conn.close()
+        # Processa e insere os dados no banco
+        processar_dados_e_inserir(conn, dados_produtos, dados_vendedores, dados_vendas)
+
+    except Exception as e:
+        logging.error(f"Erro na execução da função principal: {e}")
+
+    finally:
+        # Fechar a conexão com o banco de dados
+        if conn:
+            conn.close()
+            logging.info("Conexão com o banco de dados fechada.")
+        logging.info("Processo concluído com sucesso.")
 
 
 if __name__ == "__main__":

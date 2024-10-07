@@ -6,4 +6,4 @@ config/
 *.sqlite3
 *.db
 .DS_Store
-token.json
+
