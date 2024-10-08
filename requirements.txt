@@ -1,3 +1,9 @@
 pandas==2.2.3           # Para manipulação e análise de dados
 openpyxl==3.0.10        # Para leitura e escrita de arquivos Excel
 unittest2==1.1.0        # Para testes unitários (opcional, o unittest padrão já vem com Python)
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+oauth2client
+gspread
