@@ -1,14 +1,15 @@
-import logging
+#src/main.py
 from src.utils import carregar_dados_aba
 from src.database import create_connection, insert_produto, insert_vendedor, insert_venda
+import logging
 from config.variaveis_de_ambiente import *
 
 logging.basicConfig(filename='logs/execution.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    logging.info("Iniciando o processo de carregamento e processamento de dados.")
-    
+    logging.info("Iniciando o processo de autenticação e carregamento de dados.")
+
     try:
         dados_produtos = carregar_dados_aba(SPREADSHEET_ID, "produtos!A2:D6")
         dados_vendedores = carregar_dados_aba(SPREADSHEET_ID, "vendedores!A2:C6")
@@ -27,5 +28,5 @@ def main():
         if conn:
             conn.close()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

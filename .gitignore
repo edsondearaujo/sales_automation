@@ -1,7 +1,9 @@
-.idea
-venved
+.idea/
+.venv/
 __pycache__/
+config/
 *.py[cod]
 *.sqlite3
 *.db
 .DS_Store
+
