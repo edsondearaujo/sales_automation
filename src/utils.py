@@ -1,35 +1,25 @@
-#src/utils.py
 import logging
 from googleapiclient.discovery import build
-from src.auth import autenticar_google_sheets
-
+from src.auth_google import autenticar_google_sheets
 
 def carregar_dados_aba(spreadsheet_id, range_name):
-    """Carrega os dados de uma aba da planilha Google Sheets."""
-    print(f"Iniciando o carregamento de dados da aba: {range_name}")
     creds = autenticar_google_sheets()
-    if not creds:
-        logging.error("Erro: Falha na autenticação.")
-        print("Erro na autenticação")
-        return None
+    service = build('sheets', 'v4', credentials=creds)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+    values = result.get('values', [])
+    
+    return values
 
-    try:
-        print(f"Autenticação bem-sucedida. Tentando acessar a aba {range_name}.")
-        service = build('sheets', 'v4', credentials=creds)
-        sheet = service.spreadsheets()
+def processar_dados_e_inserir(conn, dados_produtos, dados_vendedores, dados_vendas):
+    for item in dados_produtos[1:]:
+        nome, preco, categoria = item[1], float(item[2]), item[3]
+        insert_produto(conn, nome, categoria, preco)
 
-        print(f"Acessando a planilha com ID: {spreadsheet_id}, Range: {range_name}")
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+    for item in dados_vendedores[1:]:
+        nome_vendedor = item[1]
+        insert_vendedor(conn, nome_vendedor)
 
-        values = result.get('values', [])
-        if not values:
-            logging.info(f"Nenhum dado encontrado na aba {range_name}.")
-            print(f"Nenhum dado encontrado na aba {range_name}.")
-            return []
-
-        print(f"Dados carregados da aba {range_name}:", values)
-        return values
-    except Exception as e:
-        logging.error(f"Erro ao acessar a API do Google Sheets: {e}")
-        print(f"Erro ao acessar a API do Google Sheets: {e}")
-        return None
+    for item in dados_vendas[1:]:
+        produto_id, vendedor_id, quantidade = int(item[1]), int(item[2]), int(item[3])
+        insert_venda(conn, produto_id, vendedor_id, quantidade)
